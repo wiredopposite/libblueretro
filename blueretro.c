@@ -130,6 +130,13 @@ void blueretro_pairing(bool on)
     }
 }
 
+void blueretro_forget_all(void)
+{
+    if (Running) {
+        bt_host_forget_all();
+    }
+}
+
 bool blueretro_is_pairing(void)
 {
     return bt_hci_get_inquiry() != 0;

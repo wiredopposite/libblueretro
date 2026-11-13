@@ -418,6 +418,15 @@ void bt_host_disconnect_all(void) {
     }
 }
 
+void bt_host_forget_all(void) {
+    bt_host_disconnect_all();
+    memset((void *)&bt_host_link_keys, 0, sizeof(bt_host_link_keys));
+    memset((void *)&bt_host_le_link_keys, 0, sizeof(bt_host_le_link_keys));
+    (void)bt_host_store_keys_on_file(&bt_host_link_keys);
+    (void)bt_host_store_le_keys_on_file(&bt_host_le_link_keys);
+    printf("# %s: all pairing keys cleared\n", __FUNCTION__);
+}
+
 int32_t bt_host_get_new_dev(struct bt_dev **device) {
     for (uint32_t i = 0; i < BT_MAX_DEV; i++) {
         if (!atomic_test_bit(&bt_dev[i].flags, BT_DEV_DEVICE_FOUND)) {

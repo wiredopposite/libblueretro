@@ -55,6 +55,8 @@ void blueretro_pairing(bool on);
 bool blueretro_is_pairing(void);
 // Controllers connected now
 uint32_t blueretro_connected(void);
+// Disconnects every controller and clears all pairing keys: each pairs again from scratch
+void blueretro_forget_all(void);
 
 // BlueRetro's BLE configuration service (its web page): advertised while on and no
 // controller is connected, as in BlueRetro. On by default; turning it off also drops a
