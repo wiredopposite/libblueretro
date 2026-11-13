@@ -1,0 +1,12 @@
+[mapping:blueretro]
+archive: libblueretro.a
+entries:
+    atomic (noflash)
+    delay (noflash)
+    devcrypto (noflash)
+    queue_bss (noflash)
+    lfds711_queue_bounded_singleproducer_singleconsumer_cleanup (noflash)
+    lfds711_queue_bounded_singleproducer_singleconsumer_dequeue (noflash)
+    lfds711_queue_bounded_singleproducer_singleconsumer_enqueue (noflash)
+    lfds711_queue_bounded_singleproducer_singleconsumer_init (noflash)
+    lfds711_queue_bounded_singleproducer_singleconsumer_query (noflash)

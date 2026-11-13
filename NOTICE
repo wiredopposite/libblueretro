@@ -1,0 +1,13 @@
+libblueretro
+An ESP-IDF component made from BlueRetro.
+
+BlueRetro
+Copyright (c) 2019-2025 Jacques Gagnon
+https://github.com/darthcloud/BlueRetro
+Licensed under the Apache License, Version 2.0.
+
+Changes to BlueRetro in this component are listed in README.md.
+
+liblfds 7.1.1 (queue_bss/liblfds711)
+https://www.liblfds.org
+Released by its author without a license (public domain).
