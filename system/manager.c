@@ -4,14 +4,14 @@
  */
 
 // The commands BlueRetro's macros and BLE config send. The component has no adapter
-// buttons or power pins, so power commands only drop Bluetooth.
-
-#include <esp_system.h>
+// buttons or power pins, so power commands only drop Bluetooth; restarts go through the
+// host's restart hook.
 
 #include "bluetooth/host.h"
 #include "bluetooth/hci.h"
 #include "system/fs.h"
 #include "manager.h"
+#include "blueretro_priv.h"
 
 void sys_mgr_init(uint32_t package)
 {
@@ -35,12 +35,12 @@ void sys_mgr_cmd(uint8_t cmd)
     case SYS_MGR_CMD_FACTORY_RST:
         fs_reset();
         bt_host_disconnect_all();
-        esp_restart();
+        br_restart();
         break;
     case SYS_MGR_CMD_RST:
     case SYS_MGR_CMD_ADAPTER_RST:
         bt_host_disconnect_all();
-        esp_restart();
+        br_restart();
         break;
     default:
         break;

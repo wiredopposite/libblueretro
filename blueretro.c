@@ -7,6 +7,7 @@
 // printf and ets_printf; the component is built with both renamed to br_printf.
 
 #include <stdio.h>
+#include <esp_system.h>
 #include <nvs_flash.h>
 #include <freertos/FreeRTOS.h>
 
@@ -23,6 +24,7 @@ static volatile blueretro_log_t Log;
 static volatile bool ConfigAccess = true;      // blueretro_config_access()
 static volatile bool OtaAllowed;               // blueretro_allow_ota()
 static volatile bool Running;                  // Bluetooth started
+static blueretro_restart_hook_t RestartHook;   // blueretro_set_restart_hook()
 
 void blueretro_set_log(blueretro_log_t log)
 {
@@ -128,6 +130,28 @@ void blueretro_pairing(bool on)
     } else {
         bt_hci_stop_inquiry();
     }
+}
+
+void blueretro_disconnect_all(void)
+{
+    if (Running) {
+        bt_host_disconnect_all();
+    }
+}
+
+void blueretro_set_restart_hook(blueretro_restart_hook_t hook)
+{
+    RestartHook = hook;
+}
+
+void br_restart(void)
+{
+    const blueretro_restart_hook_t hook = RestartHook;
+    if (hook != NULL && !hook()) {
+        br_printf("# BlueRetro: restart refused by the host\n");
+        return;
+    }
+    esp_restart();
 }
 
 void blueretro_forget_all(void)

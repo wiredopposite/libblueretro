@@ -24,6 +24,8 @@ void br_output_updated(uint8_t index);
 // blueretro_config_access(), blueretro_allow_ota()
 bool br_config_access(void);
 bool br_ota_allowed(void);
+// esp_restart(), unless the host's restart hook refuses it
+void br_restart(void);
 // hci.c: advertising to match br_config_access()
 void bt_hci_config_access_changed(void);
 

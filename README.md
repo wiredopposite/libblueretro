@@ -64,7 +64,8 @@ blueretro_start(&output);
 - **Outputs** are BlueRetro's wired ports, `WIRED_MAX_DEV` of them. Each Bluetooth controller drives the output its configuration assigns (the first free one by default). `wired_adapter.data[i]` holds an output's buffer and whether a controller is connected (`connected`).
 - **Callbacks** run on the Bluetooth tasks (core 0). `from_generic` reads `struct wired_ctrl`, which lives in IRAM: read it through a `volatile` pointer so the compiler can't narrow word loads to byte loads, which fault there. Build with `-fno-builtin-memset -fno-builtin-memcpy` for the same reason.
 - **Feedback**: `blueretro_feedback()` queues a `struct raw_fb` for an output (`header.wired_id`) from any task; your `fb_to_generic` turns it into rumble or LED state for the controller.
-- **Pairing**: inquiry starts at boot when no controller is known. `blueretro_pairing(true/false)` starts or stops it; `blueretro_connected()` counts controllers; `blueretro_forget_all()` disconnects them all and clears every pairing key.
+- **Pairing**: inquiry starts at boot when no controller is known. `blueretro_pairing(true/false)` starts or stops it; `blueretro_connected()` counts controllers; `blueretro_disconnect_all()` disconnects them all (they reconnect as usual), `blueretro_forget_all()` also clears every pairing key.
+- **Restarts**: BlueRetro's reset and factory reset (macros, BLE commands) restart the ESP32. `blueretro_set_restart_hook()` lets your firmware refuse that restart, for example while it is busy.
 - **Logging**: BlueRetro's `printf` and `ets_printf` go to the hook given to `blueretro_set_log()`, never straight to the console, so the UART stays free for your own protocol. Nothing is printed from interrupts.
 - **Configuration**: BlueRetro's web configuration page (over BLE) works as usual; settings are kept in the SPIFFS partition. The configuration service is advertised while no controller is connected. It has no authentication, so `blueretro_config_access(false)` turns it off (and drops a connected page) until your firmware turns it back on, for example from a menu.
 - **Firmware update** through the web page is off unless you call `blueretro_allow_ota(true)`: the page writes the next OTA partition with BlueRetro's image and boots it, which would replace your firmware.
@@ -77,6 +78,7 @@ blueretro_start(&output);
 - Memory card emulation is a stub (it would take 128 KB of RAM); the BLE interface reads zeros.
 - Text goes through `blueretro_set_log()`.
 - Feedback can be queued from more than one task.
+- Restarts go through an optional host hook.
 - The configuration service can be switched off at run time, and its firmware update is off unless the host enables it.
 - `queue_bss` is part of the component, with only the liblfds queue it uses.
 - Builds without warnings on GCC 14 (`-Wno-array-bounds` for an intentional read past a struct in the Switch driver).

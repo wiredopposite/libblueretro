@@ -55,8 +55,16 @@ void blueretro_pairing(bool on);
 bool blueretro_is_pairing(void);
 // Controllers connected now
 uint32_t blueretro_connected(void);
+// Disconnects every controller; their pairing keys stay, so each reconnects as usual
+void blueretro_disconnect_all(void);
 // Disconnects every controller and clears all pairing keys: each pairs again from scratch
 void blueretro_forget_all(void);
+
+// BlueRetro restarts the ESP32 for its reset and factory reset macros and BLE commands.
+// With a hook set, the restart happens only if it returns true (a factory reset still
+// clears the settings and keys first). Called on the Bluetooth task.
+typedef bool (*blueretro_restart_hook_t)(void);
+void blueretro_set_restart_hook(blueretro_restart_hook_t hook);
 
 // BlueRetro's BLE configuration service (its web page): advertised while on and no
 // controller is connected, as in BlueRetro. On by default; turning it off also drops a
