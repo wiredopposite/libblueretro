@@ -21,4 +21,10 @@ const char *br_output_name(void);
 // The adapter changed an output's buffer
 void br_output_updated(uint8_t index);
 
+// blueretro_config_access(), blueretro_allow_ota()
+bool br_config_access(void);
+bool br_ota_allowed(void);
+// hci.c: advertising to match br_config_access()
+void bt_hci_config_access_changed(void);
+
 #endif /* _BLUERETRO_PRIV_H_ */

@@ -56,6 +56,17 @@ bool blueretro_is_pairing(void);
 // Controllers connected now
 uint32_t blueretro_connected(void);
 
+// BlueRetro's BLE configuration service (its web page): advertised while on and no
+// controller is connected, as in BlueRetro. On by default; turning it off also drops a
+// connected configuration client. Any task, before or after blueretro_start().
+void blueretro_config_access(bool on);
+bool blueretro_config_access_on(void);
+
+// Firmware update through the configuration service (it writes the next OTA partition and
+// boots it). Off by default: a host with its own firmware would be replaced by whatever
+// image is sent, by anyone in range.
+void blueretro_allow_ota(bool allow);
+
 #ifdef __cplusplus
 }
 #endif

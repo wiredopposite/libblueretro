@@ -852,7 +852,8 @@ static void bt_hci_cmd_le_set_adv_enable(void *cp) {
     struct bt_hci_cp_le_set_adv_enable *le_set_adv_enable = (struct bt_hci_cp_le_set_adv_enable *)&bt_hci_pkt_tmp.cp;
     printf("# %s\n", __FUNCTION__);
 
-    le_set_adv_enable->enable = 0x01;
+    /* Sent either way: the start-up sequence moves on when the command completes */
+    le_set_adv_enable->enable = br_config_access() ? 0x01 : 0x00;
 
     bt_hci_cmd(BT_HCI_OP_LE_SET_ADV_ENABLE, sizeof(*le_set_adv_enable));
 }
@@ -1273,6 +1274,24 @@ void bt_hci_start_inquiry(void) {
         bt_hci_cmd_le_set_scan_param_active();
         bt_hci_cmd_le_set_scan_enable(1);
         bt_hci_cmd_periodic_inquiry(NULL);
+    }
+}
+
+void bt_hci_config_access_changed(void) {
+    struct bt_dev *device = NULL;
+
+    if (br_config_access()) {
+        if (bt_host_get_active_dev(&device) == BT_NONE) {
+            bt_hci_cmd_le_set_adv_enable(NULL);
+        }
+    }
+    else {
+        bt_hci_cmd_le_set_adv_disable(NULL);
+        device = NULL;
+        bt_host_get_dev_conf(&device);
+        if (device && atomic_test_bit(&device->flags, BT_DEV_DEVICE_FOUND)) {
+            bt_hci_disconnect(device);
+        }
     }
 }
 

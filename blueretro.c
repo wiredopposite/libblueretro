@@ -20,6 +20,9 @@
 
 static const blueretro_output_t *Output;
 static volatile blueretro_log_t Log;
+static volatile bool ConfigAccess = true;      // blueretro_config_access()
+static volatile bool OtaAllowed;               // blueretro_allow_ota()
+static volatile bool Running;                  // Bluetooth started
 
 void blueretro_set_log(blueretro_log_t log)
 {
@@ -109,7 +112,8 @@ bool blueretro_start(const blueretro_output_t *output)
     for (uint32_t i = 0; i < WIRED_MAX_DEV; i++) {
         adapter_init_buffer(i);
     }
-    return bt_host_init() == 0;
+    Running = bt_host_init() == 0;
+    return Running;
 }
 
 void blueretro_feedback(struct raw_fb *fb)
@@ -134,4 +138,35 @@ bool blueretro_is_pairing(void)
 uint32_t blueretro_connected(void)
 {
     return bt_host_get_flag_dev_cnt(BT_DEV_HID_INIT_DONE);
+}
+
+void blueretro_config_access(bool on)
+{
+    if (on == ConfigAccess) {
+        return;
+    }
+    ConfigAccess = on;
+    if (Running) {
+        bt_hci_config_access_changed();
+    }
+}
+
+bool blueretro_config_access_on(void)
+{
+    return ConfigAccess;
+}
+
+void blueretro_allow_ota(bool allow)
+{
+    OtaAllowed = allow;
+}
+
+bool br_config_access(void)
+{
+    return ConfigAccess;
+}
+
+bool br_ota_allowed(void)
+{
+    return OtaAllowed;
 }

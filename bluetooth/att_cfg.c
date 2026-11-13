@@ -462,6 +462,10 @@ static void bt_att_cfg_cmd_wr_hdlr(struct bt_dev *device, uint8_t *data, uint32_
             config_update(GAMEID_CFG);
             break;
         case CFG_CMD_OTA_START:
+            if (!br_ota_allowed()) {
+                printf("# OTA FW Update refused: not allowed by the host firmware\n");
+                break;
+            }
             update_partition = esp_ota_get_next_update_partition(NULL);
             if (esp_ota_begin(update_partition, OTA_SIZE_UNKNOWN, &ota_hdl) == 0) {
                 printf("# OTA FW Update started...\n");
