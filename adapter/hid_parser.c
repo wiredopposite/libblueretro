@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <esp_heap_caps.h>
+#include <esp_log.h>
 #include "adapter.h"
 #include "hid_parser.h"
 #include "zephyr/usb_hid.h"
@@ -355,6 +356,20 @@ static void hid_process_report(struct bt_data *bt_data, struct hid_report *repor
     bt_mon_log(true, "");
 }
 
+/* Past the last slot it would write over the next device's reports, and they'd never be freed */
+static void report_overflow(struct bt_data *bt_data) {
+    ESP_LOGW("hid_parser", "device %ld has more than %d reports, the rest are dropped",
+             (long)bt_data->base.pids->id, HID_MAX_REPORT);
+}
+
+/* The work reports that weren't kept, so every connection doesn't leak them */
+static void free_wip_reports(struct hid_report **wip_report) {
+    for (uint32_t i = 0; i < HID_TAG_CNT; i++) {
+        free(wip_report[i]);
+        wip_report[i] = NULL;
+    }
+}
+
 void hid_parser(struct bt_data *bt_data, uint8_t *data, uint32_t len) {
     struct hid_stack_element hid_stack[HID_STACK_MAX] = {0};
     uint8_t hid_stack_idx = 0;
@@ -558,7 +573,11 @@ void hid_parser(struct bt_data *bt_data, uint8_t *data, uint32_t len) {
                         if (report_bit_offset[i] % 8) {
                             wip_report[i]->len++;
                         }
-                        if (wip_report[i]->len) {
+                        if (wip_report[i]->len && report_idx >= HID_MAX_REPORT) {
+                            report_overflow(bt_data);
+                            memset(wip_report[i], 0, sizeof(struct hid_report));
+                        }
+                        else if (wip_report[i]->len) {
                             if (report_idx) {
                                 TESTS_CMDS_LOG(",\n");
                             }
@@ -566,6 +585,7 @@ void hid_parser(struct bt_data *bt_data, uint8_t *data, uint32_t len) {
                             reports[bt_data->base.pids->id][report_idx++] = wip_report[i];
                             wip_report[i] = heap_caps_aligned_alloc(32, sizeof(struct hid_report), MALLOC_CAP_32BIT);
                             if (wip_report[i] == NULL) {
+                                free_wip_reports(wip_report);
                                 return;
                             }
                             memset(wip_report[i], 0, sizeof(struct hid_report));
@@ -621,6 +641,7 @@ void hid_parser(struct bt_data *bt_data, uint8_t *data, uint32_t len) {
                 break;
             default:
                 printf("# Unknown HID marker: %02X\n", *--desc);
+                free_wip_reports(wip_report);
                 return;
         }
     }
@@ -637,16 +658,21 @@ void hid_parser(struct bt_data *bt_data, uint8_t *data, uint32_t len) {
             if (report_bit_offset[i] % 8) {
                 wip_report[i]->len++;
             }
-            if (wip_report[i]->len) {
+            if (wip_report[i]->len && report_idx >= HID_MAX_REPORT) {
+                report_overflow(bt_data);
+            }
+            else if (wip_report[i]->len) {
                 if (report_idx) {
                     TESTS_CMDS_LOG(",\n");
                 }
                 hid_process_report(bt_data, wip_report[i]);
                 reports[bt_data->base.pids->id][report_idx++] = wip_report[i];
+                wip_report[i] = NULL;
             }
         }
     }
     TESTS_CMDS_LOG("],\n");
+    free_wip_reports(wip_report);
 
     /* Free reports for non-generic devices */
     if (bt_data->base.pids->type > BT_HID_GENERIC) {
